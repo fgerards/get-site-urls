@@ -43,6 +43,7 @@
 	},
 	"dependencies": {
 		"got": "^9.3.2",
-		"normalize-url": "^4.0.0"
+		"normalize-url": "^4.0.0",
+		"limiter": "^2.1"
 	}
 }
