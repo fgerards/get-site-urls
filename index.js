@@ -102,7 +102,7 @@ const searchSite = async (settings, pages, depth) => {
 
 			// If it is a HTML page get the body and search for links
 			if (headers['content-type'].includes('text/html')) {
-				const {body} = await throttle(function () {got(url, gotOptions);});
+				const {body} = await throttle(function () {return got(url, gotOptions);});
 
 				// Add to found as it is a HTML page
 				pages.found.add(url);
