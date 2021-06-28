@@ -15,8 +15,8 @@ const throttledQueue = require('throttled-queue');
  * @returns {string}     - A clean url
  */
 const cleanUrl = url => normalizeUrl(url, {
-    stripHash: true,
-    removeQueryParameters: [new RegExp('.*')]
+	stripHash: true,
+	removeQueryParameters: [new RegExp('.*')]
 });
 
 /**
@@ -29,38 +29,38 @@ const cleanUrl = url => normalizeUrl(url, {
  * @return {array}              - An array of links found
  */
 const getLinks = (data, pageUrl, siteUrl) => {
-    // Regex link pattern
-    const linkPattern = /(?!.*mailto:)(?!.*tel:).<a[^>]+href="(.*?)"/g;
-    const links = [];
-    let result = true;
+	// Regex link pattern
+	const linkPattern = /(?!.*mailto:)(?!.*tel:).<a[^>]+href="(.*?)"/g;
+	const links = [];
+	let result = true;
 
-    // While there is a string to search
-    while (result) {
-        // Search the string using the regex pattern
-        result = linkPattern.exec(data);
+	// While there is a string to search
+	while (result) {
+		// Search the string using the regex pattern
+		result = linkPattern.exec(data);
 
-        // If there is no result then end the search
-        if (result === null) {
-            result = false;
-            break;
-        }
+		// If there is no result then end the search
+		if (result === null) {
+			result = false;
+			break;
+		}
 
-        const link = result[1];
+		const link = result[1];
 
-        // If the link already starts with the URL
-        if (link.startsWith(siteUrl)) {
-            links.push(cleanUrl(link));
-        } else if (!link.startsWith('http') && !link.startsWith('https')
-        ) {
-            // Otherwise make sure it is relative or absolute
-            const pageLink = link.startsWith('/') ? `${siteUrl}${link}` : `${pageUrl}/${link}`;
+		// If the link already starts with the URL
+		if (link.startsWith(siteUrl)) {
+			links.push(cleanUrl(link));
+		} else if (!link.startsWith('http') && !link.startsWith('https')
+		) {
+			// Otherwise make sure it is relative or absolute
+			const pageLink = link.startsWith('/') ? `${siteUrl}${link}` : `${pageUrl}/${link}`;
 
-            links.push(cleanUrl(pageLink));
-        }
-    }
+			links.push(cleanUrl(pageLink));
+		}
+	}
 
-    // Return the links
-    return links;
+	// Return the links
+	return links;
 };
 
 /**
@@ -76,60 +76,63 @@ const getLinks = (data, pageUrl, siteUrl) => {
  * @return {array}                   - An array of links found
  */
 const searchSite = async (settings, pages, depth) => {
-    const {
-        siteUrl,
-        maxDepth,
-        auth
-    } = settings;
+	const {
+		siteUrl,
+		maxDepth,
+		auth
+	} = settings;
 
-    const throttle = new throttledQueue(2, 1000);
+	const throttle = new throttledQueue(2,1000);
 
-    // For each url fetch the page data
-    throttle(function () {
-        const links = [...pages.queue].map(async url => {
-            // Delete the URL from queue
-            pages.queue.delete(url);
+	// For each url fetch the page data
 
-            try {
-                // Add authentication if it is defined
-                const gotOptions = auth ? {auth} : {};
+	const links = [...pages.queue].map(async url => {
+		// Delete the URL from queue
+		pages.queue.delete(url);
 
-                // Get the page header so we can check the type is text/html
-                const {headers} = await got.head(url, gotOptions);
+		try {
+		    throttle(function () {
 
-                // If it is a HTML page get the body and search for links
-                if (headers['content-type'].includes('text/html')) {
-                    const {body} = await got(url, gotOptions);
+            })
+			// Add authentication if it is defined
+			const gotOptions = auth ? {auth} : {};
 
-                    // Add to found as it is a HTML page
-                    pages.found.add(url);
+			// Get the page header so we can check the type is text/html
+			const {headers} = await got.head(url, gotOptions);
 
-                    // Add the unique links to the queue
-                    getLinks(body, url, cleanUrl(siteUrl)).forEach(link => {
-                        // If the link is not in error or found add to queue
-                        if (!pages.found.has(link) && !pages.errors.has(link)) {
-                            pages.queue.add(link);
-                        }
-                    });
-                }
-            } catch (error) {
-                pages.errors.add(url);
-            }
-        });
-    })
-    await Promise.all(links);
+			// If it is a HTML page get the body and search for links
+			if (headers['content-type'].includes('text/html')) {
+				const {body} = await throttle(function () {got(url, gotOptions);});
 
-    // If we have reached maximum depth or the queue is empty
-    // maxDepth + 1 as the first page doesn't count
-    if (depth === maxDepth || pages.queue.size === 0) {
-        return {
-            pages: [...pages.found],
-            errors: [...pages.errors]
-        };
-    }
+				// Add to found as it is a HTML page
+				pages.found.add(url);
 
-    // Start the search again as the queue has more to search
-    return searchSite(settings, pages, depth + 1);
+				// Add the unique links to the queue
+				getLinks(body, url, cleanUrl(siteUrl)).forEach(link => {
+					// If the link is not in error or found add to queue
+					if (!pages.found.has(link) && !pages.errors.has(link)) {
+						pages.queue.add(link);
+					}
+				});
+			}
+		} catch (error) {
+			pages.errors.add(url);
+		}
+	});
+
+	await Promise.all(links);
+
+	// If we have reached maximum depth or the queue is empty
+	// maxDepth + 1 as the first page doesn't count
+	if (depth === maxDepth || pages.queue.size === 0) {
+		return {
+			pages: [...pages.found],
+			errors: [...pages.errors]
+		};
+	}
+
+	// Start the search again as the queue has more to search
+	return searchSite(settings, pages, depth + 1);
 };
 
 /**
@@ -141,23 +144,23 @@ const searchSite = async (settings, pages, depth) => {
  * @return {array}            - An array of links found
  */
 const getSiteUrls = (url, maxDepth = 100) => {
-    const siteUrl = cleanUrl(url);
+	const siteUrl = cleanUrl(url);
 
-    const pages = {
-        queue: new Set([url]),
-        found: new Set([]),
-        errors: new Set([])
-    };
+	const pages = {
+		queue: new Set([url]),
+		found: new Set([]),
+		errors: new Set([])
+	};
 
-    const {username, password} = new URL(siteUrl);
+	const {username, password} = new URL(siteUrl);
 
-    const settings = {
-        siteUrl,
-        maxDepth,
-        auth: username && password ? `${username}:${password}` : ''
-    };
+	const settings = {
+		siteUrl,
+		maxDepth,
+		auth: username && password ? `${username}:${password}` : ''
+	};
 
-    return searchSite(settings, pages, 0);
+	return searchSite(settings, pages, 0);
 };
 
 // Export the default module
