@@ -5,6 +5,7 @@
 // Dependencies
 const got = require('got');
 const normalizeUrl = require('normalize-url');
+import { RateLimiter} from "limiter";
 
 /**
  * Clean the URL with normalize-url
@@ -81,12 +82,14 @@ const searchSite = async (settings, pages, depth) => {
 		auth
 	} = settings;
 
+	const RateLimiter = new RateLimiter({ tokensPerInterval: 10, interval: "minute" });
 	// For each url fetch the page data
 	const links = [...pages.queue].map(async url => {
 		// Delete the URL from queue
 		pages.queue.delete(url);
 
 		try {
+			const remainingRequests = await limiter.removeTokens(1);
 			// Add authentication if it is defined
 			const gotOptions = auth ? {auth} : {};
 
