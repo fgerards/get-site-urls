@@ -44,6 +44,6 @@
 	"dependencies": {
 		"got": "^9.3.2",
 		"normalize-url": "^4.0.0",
-		"throttled-queue": "^1.0.7"
+		"promise-ratelimit": "^0.0.3"
 	}
 }
