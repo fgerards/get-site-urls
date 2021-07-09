@@ -96,7 +96,7 @@ const searchSite = async (settings, pages, depth) => {
             // If it is a HTML page get the body and search for links
             if (headers['content-type'].includes('text/html')) {
                 const {body} = await got(url, gotOptions);
-
+                console.log(url);
                 // Add to found as it is a HTML page
                 pages.found.add(url);
 
@@ -136,7 +136,7 @@ const searchSite = async (settings, pages, depth) => {
  *
  * @return {array}            - An array of links found
  */
-const getSiteUrls = (url, maxDepth = 100) => {
+const getSiteUrls = (url, maxDepth = 5) => {
     const siteUrl = cleanUrl(url);
 
     const pages = {
